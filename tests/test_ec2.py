@@ -12,7 +12,7 @@ GENERIC_SUBNET = "subnet-test"
 GENERIC_IP = "8.8.8.8"
 GENERIC_INSTANCE = "i-123"
 GENERIC_VOL = "vol-123"
-
+GENERIC_AMI_DESCRIPTION = "{0} description".format(GENERIC_AMI)
 
 class _AWS(object):
     """AWS object for mock testing with only basic features."""
@@ -406,3 +406,27 @@ class TestTagCollection(_TestEC2Collection, unittest.TestCase):
     destroy_expectations = [call(commands['destroy'], resources=["res-test"],
                                  tags=["tag-test"])]
     instance = _AWS().ec2.Tags
+
+
+class TestImageCollection(_TestEC2Collection, unittest.TestCase):
+    class_name = "Images"
+    commands = {'get': 'DescribeImages',
+                'create': 'CreateImage',
+                'destroy': 'DeregisterImage'}
+    get_expectations = [call(commands['get'], response_data_key='Images')]
+    create_args = [{
+        'instance_id': GENERIC_INSTANCE,
+        'name': GENERIC_INSTANCE,
+        'no_reboot':  True,
+        'description': GENERIC_AMI_DESCRIPTION
+    }]
+    create_expectations = [call(
+        commands['create'],
+        response_data_key='ImageId',
+        Description=GENERIC_AMI_DESCRIPTION,
+        VolumeId=GENERIC_AMI
+    )]
+    destroy_args = [{'image_id': GENERIC_AMI}]
+    destroy_expectations = [call(commands['destroy'],
+                                 SnapshotId=GENERIC_AMI)]
+    instance = _AWS().ec2.Images
